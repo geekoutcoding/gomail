@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GoMail - Sign Up</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Sign Up for GoMail</h1>
+    <form id="signupForm">
+      <input type="text" id="username" placeholder="Username (e.g., john)" required>
+      <input type="text" id="name" placeholder="Your Full Name" required>
+      <input type="password" id="password" placeholder="Password" required>
+      <p>Your email will be: <span id="emailPreview"></span></p>
+      <button type="submit">Sign Up</button>
+    </form>
+    <p>Already have an account? <a href="login.html">Login</a></p>
+    <div id="error" class="error"></div>
+  </div>
+  <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+    import { doc, setDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+    const usernameInput = document.getElementById('username');
+    const emailPreview = document.getElementById('emailPreview');
+    usernameInput.addEventListener('input', () => {
+      emailPreview.textContent = usernameInput.value + '@go-mail-app.web.app';
+    });
+
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const name = document.getElementById('name').value;
+      const password = document.getElementById('password').value;
+      const email = username + '@go-mail-app.web.app';
+      const errorDiv = document.getElementById('error');
+
+      try {
+        // Create Firebase Auth user
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        
+        // Store additional user info in Firestore
+        await setDoc(doc(db, 'users', user.uid), {
+          uid: user.uid,
+          email: email,
+          name: name,
+          username: username
+        });
+
+        window.location.href = 'inbox.html';
+      } catch (error) {
+        errorDiv.textContent = error.message;
+      }
+    });
+  </script>
+</body>
+</html>
