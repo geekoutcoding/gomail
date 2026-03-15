@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GoMail - Inbox</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Welcome, <span id="userName"></span>!</h1>
+    <p>Your email: <span id="userEmail"></span></p>
+    <nav>
+      <a href="compose.html">Compose</a>
+      <a href="#" id="logout">Logout</a>
+    </nav>
+    <h2>Inbox</h2>
+    <div id="messages"></div>
+  </div>
+  <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+    import { collection, query, where, orderBy, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+    // Check auth state
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+      // Display user info (you can fetch name from Firestore if needed)
+      document.getElementById('userEmail').textContent = user.email;
+      // For name, we could fetch from Firestore, but let's just use email for now
+      document.getElementById('userName').textContent = user.email.split('@')[0];
+
+      // Load messages
+      const messagesRef = collection(db, 'messages');
+      const q = query(messagesRef, where('recipientId', '==', user.uid), orderBy('timestamp', 'desc'));
+      onSnapshot(q, (snapshot) => {
+        const container = document.getElementById('messages');
+        if (snapshot.empty) {
+          container.innerHTML = '<p>No messages.</p>';
+        } else {
+          let html = '<ul>';
+          snapshot.forEach(doc => {
+            const msg = doc.data();
+            html += `<li>
+              <strong>From:</strong> ${msg.senderName} (${msg.senderEmail})<br>
+              <strong>Subject:</strong> <a href="message.html?id=${doc.id}">${msg.subject}</a><br>
+              <strong>Date:</strong> ${new Date(msg.timestamp?.toDate()).toLocaleString()}<br>
+              ${msg.isRead ? '' : '<em>New</em>'}
+            </li><hr>`;
+          });
+          html += '</ul>';
+          container.innerHTML = html;
+        }
+      });
+    });
+
+    document.getElementById('logout').addEventListener('click', async (e) => {
+      e.preventDefault();
+      await signOut(auth);
+      window.location.href = 'login.html';
+    });
+  </script>
+</body>
+</html>
