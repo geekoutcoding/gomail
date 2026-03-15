@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GoMail - View Message</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Message</h1>
+    <nav>
+      <a href="inbox.html">Inbox</a>
+      <a href="compose.html">Compose</a>
+      <a href="#" id="logout">Logout</a>
+    </nav>
+    <div id="messageDetails"></div>
+  </div>
+  <script type="module">
+    import { auth, db } from './firebase-config.js';
+    import { signOut } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+    import { doc, getDoc, updateDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const messageId = urlParams.get('id');
+      if (!messageId) {
+        document.getElementById('messageDetails').innerHTML = '<p>No message ID specified.</p>';
+        return;
+      }
+
+      const messageRef = doc(db, 'messages', messageId);
+      const messageSnap = await getDoc(messageRef);
+      if (!messageSnap.exists()) {
+        document.getElementById('messageDetails').innerHTML = '<p>Message not found.</p>';
+        return;
+      }
+
+      const msg = messageSnap.data();
+      // Ensure the current user is the recipient
+      if (msg.recipientId !== user.uid) {
+        document.getElementById('messageDetails').innerHTML = '<p>Access denied.</p>';
+        return;
+      }
+
+      // Mark as read
+      if (!msg.isRead) {
+        await updateDoc(messageRef, { isRead: true });
+      }
+
+      const html = `
+        <p><strong>From:</strong> ${msg.senderName} (${msg.senderEmail})</p>
+        <p><strong>Subject:</strong> ${msg.subject}</p>
+        <p><strong>Date:</strong> ${msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleString() : 'Unknown'}</p>
+        <hr>
+        <p>${msg.body.replace(/\n/g, '<br>')}</p>
+      `;
+      document.getElementById('messageDetails').innerHTML = html;
+    });
+
+    document.getElementById('logout').addEventListener('click', async (e) => {
+      e.preventDefault();
+      await signOut(auth);
+      window.location.href = 'login.html';
+    });
+  </script>
+</body>
+</html>
