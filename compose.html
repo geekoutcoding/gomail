@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>GoMail - Compose</title>
+  <title>GeekOut Mail - Compose</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,7 +12,7 @@
       <a href="#" id="logout">Logout</a>
     </nav>
     <form id="composeForm">
-      <input type="email" id="to" placeholder="To (e.g., friend@go-mail-app.web.app)" required>
+      <input type="email" id="to" placeholder="To (e.g., friend@mail.geekout.lol)" required>
       <input type="text" id="subject" placeholder="Subject" required>
       <textarea id="body" placeholder="Message" rows="10" required></textarea>
       <button type="submit">Send</button>
@@ -40,8 +40,8 @@
       successDiv.textContent = '';
 
       // Validate domain
-      if (!to.endsWith('@go-mail-app.web.app')) {
-        errorDiv.textContent = 'Recipient must be on go-mail-app.web.app';
+      if (!to.endsWith('@mail.geekout.lol')) {
+        errorDiv.textContent = 'Recipient must be on mail.geekout.lol';
         return;
       }
 
